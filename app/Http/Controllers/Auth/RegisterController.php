@@ -20,6 +20,11 @@ class RegisterController extends Controller
     ) {
     }
 
+    /**
+     * Register a new business customer
+     * 
+     * Creates a business and its initial user account
+     */
     public function register(RegisterBusinessRequest $request)
     {
         $this->registerService->register($request->validated());
