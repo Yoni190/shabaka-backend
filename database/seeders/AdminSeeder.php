@@ -19,7 +19,7 @@ class AdminSeeder extends Seeder
      */
     private const ADMIN_EMAIL = 'admin@shabaka.com';
 
-    private const ADMIN_PASSWORD = 'password';
+    private const ADMIN_PASSWORD = 'Aa123456';
 
     /**
      * Run the database seeds.
