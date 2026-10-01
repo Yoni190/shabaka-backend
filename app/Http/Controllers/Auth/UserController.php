@@ -22,4 +22,15 @@ class UserController extends Controller
     {
         return $this->userService->getAuthenticatedUser($request->user());
     }
+
+    /**
+     * Get the authenticated admin
+     *
+     * Returns the currently authenticated admin user's profile.
+     * Only users with the admin role may access this endpoint.
+     */
+    public function showAdmin(Request $request): User
+    {
+        return $this->userService->getAuthenticatedAdmin($request->user());
+    }
 }
