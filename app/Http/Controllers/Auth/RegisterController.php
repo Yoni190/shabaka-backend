@@ -10,7 +10,7 @@ use App\Enums\UserRole;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Services\Auth\RegisterService;
-use App\Http\Requests\RegisterBusinessRequest;
+use App\Http\Requests\Auth\RegisterBusinessRequest;
 
 
 class RegisterController extends Controller
