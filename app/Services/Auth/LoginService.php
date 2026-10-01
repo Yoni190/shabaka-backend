@@ -3,6 +3,7 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -21,15 +22,26 @@ class LoginService
         $user = User::where('email', $data['email'])->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
-            // 422 with an `email` error bag — Laravel renders this as JSON automatically.
-            throw ValidationException::withMessages([
-                'email' => [__('auth.failed')],
-            ]);
+            $this->fail();
+        }
+
+        if ($user->role !== UserRole::BUSINESS_CUSTOMER) {
+            $this->fail();
         }
 
         return [
             'user'  => $user,
             'token' => $user->createToken('auth_token')->plainTextToken,
         ];
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function fail(): never
+    {
+        throw ValidationException::withMessages([
+            'email' => [__('auth.failed')],
+        ]);
     }
 }
