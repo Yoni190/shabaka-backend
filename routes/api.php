@@ -19,5 +19,9 @@ Route::prefix('v1')->group(function () {
     // Admin endpoints
     Route::prefix('admin')->group(function () {
         Route::post('login', [AdminLoginController::class, 'login']);
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('user', [UserController::class, 'showAdmin']);
+        });
     });
 });
