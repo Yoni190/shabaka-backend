@@ -15,20 +15,4 @@ class UserService
     {
         return $user->loadMissing('business');
     }
-
-    /**
-     * Return the authenticated admin user.
-     *
-     * Admins have no business, so no relation is eager-loaded here.
-     *
-     * @throws AuthorizationException
-     */
-    public function getAuthenticatedAdmin(User $user): User
-    {
-        if ($user->role !== UserRole::ADMIN) {
-            throw new AuthorizationException('This account does not have admin access.');
-        }
-
-        return $user;
-    }
 }

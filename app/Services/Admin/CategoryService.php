@@ -2,10 +2,7 @@
 
 namespace App\Services\Admin;
 
-use App\Enums\UserRole;
 use App\Models\Category;
-use App\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CategoryService
@@ -19,7 +16,7 @@ class CategoryService
     /**
      * @param  array{search?: string, per_page?: int|string, sort?: string, direction?: string}  $filters
      */
-    public function paginate(User $admin, array $filters): LengthAwarePaginator
+    public function paginate(array $filters): LengthAwarePaginator
     {
         $perPage = min((int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
         $perPage = max($perPage, 1);
@@ -43,12 +40,12 @@ class CategoryService
     /**
      * @param  array{name: string}  $data
      */
-    public function create(User $admin, array $data): Category
+    public function create(array $data): Category
     {
         return Category::create($data);
     }
 
-    public function find(User $admin, Category $category): Category
+    public function find(Category $category): Category
     {
         return $category->loadCount('products');
     }
@@ -56,14 +53,14 @@ class CategoryService
     /**
      * @param  array{name: string}  $data
      */
-    public function update(User $admin, Category $category, array $data): Category
+    public function update(Category $category, array $data): Category
     {
         $category->update($data);
 
         return $category;
     }
 
-    public function delete(User $admin, Category $category): void
+    public function delete(Category $category): void
     {
         if ($category->products()->exists()) {
             abort(409, 'This category cannot be deleted because it has products assigned to it.');

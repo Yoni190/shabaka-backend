@@ -21,18 +21,17 @@ class CategoryController extends Controller
     /**
      * List categories
      *
-     * Returns a paginated list of product categories.
-     * Supports `page`, `per_page` (max 100), `search`, `sort` (name|created_at),
-     * and `direction` (asc|desc) query parameters.
+     * Returns a paginated list of product categories. Supports `page`, `per_page`
+     * (max 100), `search`, `sort` (name|created_at), and `direction` (asc|desc)
+     * query parameters.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $categories = $this->categoryService->paginate(
-            $request->user(),
-            $request->only(['search', 'per_page', 'sort', 'direction']),
+        return CategoryResource::collection(
+            $this->categoryService->paginate(
+                $request->only(['search', 'per_page', 'sort', 'direction']),
+            ),
         );
-
-        return CategoryResource::collection($categories);
     }
 
     /**
@@ -42,10 +41,7 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request): JsonResponse
     {
-        $category = $this->categoryService->create(
-            $request->user(),
-            $request->validated(),
-        );
+        $category = $this->categoryService->create($request->validated());
 
         return (new CategoryResource($category))
             ->additional(['message' => 'Category created successfully'])
@@ -58,11 +54,9 @@ class CategoryController extends Controller
      *
      * Returns a single product category together with its product count.
      */
-    public function show(Request $request, Category $category): CategoryResource
+    public function show(Category $category): CategoryResource
     {
-        return new CategoryResource(
-            $this->categoryService->find($request->user(), $category),
-        );
+        return new CategoryResource($this->categoryService->find($category));
     }
 
     /**
@@ -72,11 +66,7 @@ class CategoryController extends Controller
      */
     public function update(UpdateCategoryRequest $request, Category $category): JsonResponse
     {
-        $category = $this->categoryService->update(
-            $request->user(),
-            $category,
-            $request->validated(),
-        );
+        $category = $this->categoryService->update($category, $request->validated());
 
         return (new CategoryResource($category))
             ->additional(['message' => 'Category updated successfully'])
@@ -89,9 +79,9 @@ class CategoryController extends Controller
      * Deletes a product category. Fails with `409 Conflict` if the category
      * still has products assigned to it.
      */
-    public function destroy(Request $request, Category $category): JsonResponse
+    public function destroy(Category $category): JsonResponse
     {
-        $this->categoryService->delete($request->user(), $category);
+        $this->categoryService->delete($category);
 
         return response()->json(['message' => 'Category deleted successfully']);
     }

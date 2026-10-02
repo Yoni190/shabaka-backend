@@ -24,7 +24,7 @@ class DashboardService
      *
      * @return array<string, mixed>
      */
-    public function summary(User $admin): array
+    public function summary(): array
     {
         return [
             'catalogue'        => $this->catalogue(),

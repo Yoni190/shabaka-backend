@@ -19,10 +19,10 @@ class DashboardController extends Controller
      * Returns catalogue and customer statistics plus the most recently
      * registered business customers for the admin dashboard homepage.
      */
-    public function index(Request $request): JsonResponse
+    public function index(): JsonResponse
     {
         return response()->json([
-            'data' => $this->dashboardService->summary($request->user()),
+            'data' => $this->dashboardService->summary(),
         ]);
     }
 }
