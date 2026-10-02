@@ -21,8 +21,6 @@ class CategoryService
      */
     public function paginate(User $admin, array $filters): LengthAwarePaginator
     {
-        $this->ensureAdmin($admin);
-
         $perPage = min((int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
         $perPage = max($perPage, 1);
 
@@ -47,15 +45,11 @@ class CategoryService
      */
     public function create(User $admin, array $data): Category
     {
-        $this->ensureAdmin($admin);
-
         return Category::create($data);
     }
 
     public function find(User $admin, Category $category): Category
     {
-        $this->ensureAdmin($admin);
-
         return $category->loadCount('products');
     }
 
@@ -64,8 +58,6 @@ class CategoryService
      */
     public function update(User $admin, Category $category, array $data): Category
     {
-        $this->ensureAdmin($admin);
-
         $category->update($data);
 
         return $category;
@@ -73,22 +65,10 @@ class CategoryService
 
     public function delete(User $admin, Category $category): void
     {
-        $this->ensureAdmin($admin);
-
         if ($category->products()->exists()) {
             abort(409, 'This category cannot be deleted because it has products assigned to it.');
         }
 
         $category->delete();
-    }
-
-    /**
-     * @throws AuthorizationException
-     */
-    private function ensureAdmin(User $user): void
-    {
-        if ($user->role !== UserRole::ADMIN) {
-            throw new AuthorizationException('This account does not have admin access.');
-        }
     }
 }

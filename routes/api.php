@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('admin')->group(function () {
         Route::post('login', [AdminLoginController::class, 'login']);
 
-        Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware(['auth:sanctum', 'admin'])->group(function () {
             Route::get('user', [UserController::class, 'showAdmin']);
             Route::post('logout', [LogoutController::class, 'logout']);
             Route::get('dashboard', [DashboardController::class, 'index']);

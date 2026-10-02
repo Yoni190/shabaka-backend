@@ -23,15 +23,9 @@ class DashboardService
      * Aggregate the admin dashboard summary.
      *
      * @return array<string, mixed>
-     *
-     * @throws AuthorizationException
      */
     public function summary(User $admin): array
     {
-        if ($admin->role !== UserRole::ADMIN) {
-            throw new AuthorizationException('This account does not have admin access.');
-        }
-
         return [
             'catalogue'        => $this->catalogue(),
             'customers'        => $this->customers(),
