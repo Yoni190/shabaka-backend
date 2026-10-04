@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\ProductController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -30,6 +31,7 @@ Route::prefix('v1')->group(function () {
             
             Route::apiResource('categories', CategoryController::class);
             Route::apiResource('brands', BrandController::class);
+            Route::apiResource('products', ProductController::class);
         });
     });
 });
