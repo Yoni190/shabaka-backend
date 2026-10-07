@@ -77,7 +77,8 @@ class ProductService
 
         if (!empty($images)) {
             foreach ($images as $index => $imageFile) {
-                $path = $imageFile->store('products', 's3');
+                $filename = uniqid() . '.' . $imageFile->getClientOriginalExtension();
+                $path = $imageFile->storeAs("products/{$product->id}", $filename, 's3');
 
                 $product->images()->create([
                     'path'       => $path,
@@ -122,7 +123,9 @@ class ProductService
             $maxSortOrder = $product->images()->max('sort_order') ?? -1;
 
             foreach ($images as $index => $imageFile) {
-                $path = $imageFile->store('products', 's3');
+                $filename = uniqid() . '.' . $imageFile->getClientOriginalExtension();
+                $path = $imageFile->storeAs("products/{$product->id}", $filename, 's3');
+                
                 $sortOrder = $maxSortOrder + $index + 1;
 
                 $isPrimary = $product->images()->count() === 0 && $index === 0;
