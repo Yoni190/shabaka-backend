@@ -17,6 +17,8 @@ class UpdateProductRequest extends FormRequest
      */
     public function rules(): array
     {
+        $product = $this->route('product');
+        $productId = $product instanceof \App\Models\Product ? $product->id : $product;
         return [
             'category_id'    => ['required', 'integer', Rule::exists('categories', 'id')],
             'brand_id'       => ['required', 'integer', Rule::exists('brands', 'id')],
@@ -31,6 +33,13 @@ class UpdateProductRequest extends FormRequest
             'price'          => ['required', 'numeric', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'is_active'      => ['required', 'boolean'],
+            'images'         => ['nullable', 'array'],
+            'images.*'       => ['image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'delete_image_ids'  => ['nullable', 'array'],
+            'delete_image_ids.*'=> [
+                'integer',
+                Rule::exists('product_images', 'id')->where('product_id', $productId),
+            ],
         ];
     }
 }
