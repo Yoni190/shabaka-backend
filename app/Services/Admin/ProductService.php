@@ -37,7 +37,7 @@ class ProductService
         $direction = strtolower($filters['direction'] ?? '') === 'desc' ? 'desc' : 'asc';
 
         return Product::query()
-            ->with(['category', 'brand'])
+            ->with(['category', 'brand', 'images'])
             ->when(
                 $filters['search'] ?? null,
                 fn (Builder $query, string $search) => $query->where(function (Builder $q) use ($search) {
@@ -93,7 +93,7 @@ class ProductService
 
     public function find(Product $product): Product
     {
-        return $product->load(['category', 'brand']);
+        return $product->load(['category', 'brand', 'images']);
     }
 
     /**
@@ -125,7 +125,7 @@ class ProductService
             foreach ($images as $index => $imageFile) {
                 $filename = uniqid() . '.' . $imageFile->getClientOriginalExtension();
                 $path = $imageFile->storeAs("products/{$product->id}", $filename, 's3');
-                
+
                 $sortOrder = $maxSortOrder + $index + 1;
 
                 $isPrimary = $product->images()->count() === 0 && $index === 0;
