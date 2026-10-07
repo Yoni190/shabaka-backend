@@ -100,9 +100,46 @@ class ProductService
      */
     public function update(Product $product, array $data): Product
     {
+        $images = $data['images'] ?? [];
+        $deleteImageIds = $data['delete_image_ids'] ?? [];
+        
+        unset($data['images'], $data['delete_image_ids']);
+
         $product->update($data);
 
-        return $product->load(['category', 'brand']);
+        if (!empty($deleteImageIds)) {
+            $imagesToDelete = $product->images()->whereIn('id', $deleteImageIds)->get();
+
+            foreach ($imagesToDelete as $imageRecord) {
+                if ($imageRecord->path) {
+                    Storage::disk('s3')->delete($imageRecord->path);
+                }
+                $imageRecord->delete();
+            }
+        }
+
+        if (!empty($images)) {
+            $maxSortOrder = $product->images()->max('sort_order') ?? -1;
+
+            foreach ($images as $index => $imageFile) {
+                $path = $imageFile->store('products', 's3');
+                $sortOrder = $maxSortOrder + $index + 1;
+
+                $isPrimary = $product->images()->count() === 0 && $index === 0;
+
+                $product->images()->create([
+                    'path'       => $path,
+                    'is_primary' => $isPrimary,
+                    'sort_order' => $sortOrder,
+                ]);
+            }
+        }
+
+        if ($product->images()->count() > 0 && !$product->images()->where('is_primary', true)->exists()) {
+            $product->images()->orderBy('sort_order')->first()?->update(['is_primary' => true]);
+        }
+
+        return $product->load(['category', 'brand', 'images']);
     }
 
     public function delete(Product $product): void
