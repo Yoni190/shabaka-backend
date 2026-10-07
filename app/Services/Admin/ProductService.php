@@ -107,6 +107,14 @@ class ProductService
 
     public function delete(Product $product): void
     {
+        $product->loadMissing('images');
+
+        foreach ($product->images as $image) {
+            if ($image->path) {
+                Storage::disk('s3')->delete($image->path);
+            }
+        }
+
         $product->delete();
     }
 
