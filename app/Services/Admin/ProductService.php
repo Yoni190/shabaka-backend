@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 class ProductService
 {
@@ -69,7 +70,24 @@ class ProductService
      */
     public function create(array $data): Product
     {
-        return Product::create($data)->load(['category', 'brand']);
+        $images = $data['images'] ?? [];
+        unset($data['images']);
+
+        $product = Product::create($data);
+
+        if (!empty($images)) {
+            foreach ($images as $index => $imageFile) {
+                $path = $imageFile->store('products', 's3');
+
+                $product->images()->create([
+                    'path'       => $path,
+                    'is_primary' => $index === 0,
+                    'sort_order' => $index,
+                ]);
+            }
+        }
+
+        return $product->load(['category', 'brand', 'images']);
     }
 
     public function find(Product $product): Product
