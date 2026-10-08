@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Catalog\CategoryController as CatalogCategoryController;
+use App\Http\Controllers\Catalog\ProductController as CatalogProductController;
 use App\Http\Controllers\Catalog\HomeController;
 
 Route::prefix('v1')->group(function () {
@@ -39,7 +40,9 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('home')->group(function () {
         Route::get('categories', [HomeController::class, 'categories']);
+        Route::get('products', [HomeController::class, 'products']); 
     });
 
     Route::get('categories', [CatalogCategoryController::class, 'index']);
+    Route::get('products', [CatalogProductController::class, 'index']);
 });
