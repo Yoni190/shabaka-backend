@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'price',
     'stock_quantity',
     'is_active',
+    'is_featured', 
 ])]
 class Product extends Model
 {
@@ -28,6 +29,7 @@ class Product extends Model
             'price' => 'decimal:2',
             'stock_quantity' => 'integer',
             'is_active' => 'boolean',
+            'is_featured'    => 'boolean',
         ];
     }
 
