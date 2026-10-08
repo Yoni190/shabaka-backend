@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Catalog\CategoryController as CatalogCategoryController;
+use App\Http\Controllers\Catalog\HomeController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -34,4 +36,10 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('products', ProductController::class);
         });
     });
+
+    Route::prefix('home')->group(function () {
+        Route::get('categories', [HomeController::class, 'categories']);
+    });
+
+    Route::get('categories', [CatalogCategoryController::class, 'index']);
 });
