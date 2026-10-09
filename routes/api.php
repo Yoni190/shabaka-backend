@@ -45,4 +45,5 @@ Route::prefix('v1')->group(function () {
 
     Route::get('categories', [CatalogCategoryController::class, 'index']);
     Route::get('products', [CatalogProductController::class, 'index']);
+    Route::get('products/{product}', [CatalogProductController::class, 'show']);
 });
