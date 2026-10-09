@@ -36,6 +36,7 @@ class ProductResource extends JsonResource
                     'url' => config('filesystems.disks.s3.url')
                         . '/storage/v1/object/public/product-images/'
                         . $image->path,
+                    'path' => $image->path,
                     'is_primary' => $image->is_primary,
                     'sort_order' => $image->sort_order,
                 ];
