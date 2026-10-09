@@ -83,4 +83,26 @@ class ProductService
             && $filters[$key] !== null
             && $filters[$key] !== '';
     }
+
+    /**
+     * Public product detail.
+     *
+     * Inactive products are treated as not found, so the public endpoint does
+     * not leak the existence of products that are not live. Reuses the same
+     * eager loads as `paginate()` so there is no N+1 risk.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function findPublic(Product $product): Product
+    {
+        if (! $product->is_active) {
+            abort(404);
+        }
+
+        return $product->load([
+            'category',
+            'brand',
+            'images' => fn ($query) => $query->orderBy('sort_order')->orderBy('id'),
+        ]);
+    }
 }

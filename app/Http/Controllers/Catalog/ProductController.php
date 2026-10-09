@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Catalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Services\Catalog\ProductService;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -45,5 +46,17 @@ class ProductController extends Controller
                 ]),
             ),
         );
+    }
+
+    /**
+     * Show a product
+     *
+     * Returns a single active product for the storefront product details page.
+     * Inactive products are treated as not found. The response includes the
+     * product's category, brand, and all images ordered by their display order.
+     */
+    public function show(Product $product): ProductResource
+    {
+        return new ProductResource($this->productService->findPublic($product));
     }
 }
