@@ -22,7 +22,7 @@ class UpdateProductRequest extends FormRequest
         return [
             'category_id'    => ['required', 'integer', Rule::exists('categories', 'id')],
             'brand_id'       => ['required', 'integer', Rule::exists('brands', 'id')],
-            'name'           => ['required', 'string', 'max:255'],
+            'name'           => ['required', 'string', 'max:100'],
             'sku'            => [
                 'required',
                 'string',
