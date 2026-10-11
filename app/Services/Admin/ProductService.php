@@ -28,7 +28,7 @@ class ProductService
      */
     public function paginate(array $filters): LengthAwarePaginator
     {
-        $perPage = max(1, min((int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE));
+        $perPage = $this->resolvePerPage($filters['per_page'] ?? null);
 
         $sort = in_array($filters['sort'] ?? null, self::SORTABLE, true)
             ? $filters['sort']
@@ -169,5 +169,24 @@ class ProductService
         return array_key_exists($key, $filters)
             && $filters[$key] !== null
             && $filters[$key] !== '';
+    }
+
+    /**
+     * Coerce the incoming per_page value into a sane integer.
+     *
+     * Missing, non-numeric, zero, and negative values all fall back to the
+     * default. Values above the max are clamped to the max.
+     */
+    private function resolvePerPage(mixed $value): int
+    {
+        // filter_var with FILTER_VALIDATE_INT returns false for 'abc', '', null,
+        // and '2.5' (non-integer strings), but returns the int for '2' and 2.
+        $validated = filter_var($value, FILTER_VALIDATE_INT);
+
+        if ($validated === false || $validated < 1) {
+            return self::DEFAULT_PER_PAGE;
+        }
+
+        return min($validated, self::MAX_PER_PAGE);
     }
 }
