@@ -5,6 +5,7 @@ namespace App\Services\Catalog;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use App\Support\Pagination\PerPage;
 
 class ProductService
 {
@@ -33,10 +34,7 @@ class ProductService
      */
     public function paginate(array $filters): LengthAwarePaginator
     {
-        $perPage = max(
-            1,
-            min((int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE),
-        );
+        $perPage = PerPage::resolve($filters['per_page'] ?? null);
 
         $sort = in_array($filters['sort'] ?? null, self::SORTABLE, true)
             ? $filters['sort']
