@@ -19,6 +19,7 @@ class StoreBrandRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('brands', 'name')],
+            'brand_image' => ['nullable', 'image', 'max:2048'],
         ];
     }
 }

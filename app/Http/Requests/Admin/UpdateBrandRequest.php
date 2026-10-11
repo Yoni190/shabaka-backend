@@ -24,6 +24,7 @@ class UpdateBrandRequest extends FormRequest
                 'max:255',
                 Rule::unique('brands', 'name')->ignore($this->route('brand')),
             ],
+            'brand_image' => ['nullable', 'image', 'max:2048'],
         ];
     }
 }
