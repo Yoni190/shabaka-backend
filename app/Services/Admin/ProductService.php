@@ -7,6 +7,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use App\Support\Pagination\PerPage;
+use App\Services\FileStorageService;
 
 class ProductService
 {
@@ -15,6 +16,10 @@ class ProductService
 
     /** Columns a client is allowed to sort by. */
     private const SORTABLE = ['name', 'price', 'stock_quantity', 'created_at'];
+
+    public function __construct(
+        private readonly FileStorageService $fileStorage,
+    ) {}
 
     /**
      * @param  array{
@@ -78,8 +83,7 @@ class ProductService
 
         if (!empty($images)) {
             foreach ($images as $index => $imageFile) {
-                $filename = uniqid() . '.' . $imageFile->getClientOriginalExtension();
-                $path = $imageFile->storeAs("products/{$product->id}", $filename, 's3');
+                $path = $this->fileStorage->store($imageFile, "products/{$product->id}");
 
                 $product->images()->create([
                     'path'       => $path,
@@ -104,7 +108,7 @@ class ProductService
     {
         $images = $data['images'] ?? [];
         $deleteImageIds = $data['delete_image_ids'] ?? [];
-        
+
         unset($data['images'], $data['delete_image_ids']);
 
         $product->update($data);
@@ -112,23 +116,18 @@ class ProductService
         if (!empty($deleteImageIds)) {
             $imagesToDelete = $product->images()->whereIn('id', $deleteImageIds)->get();
 
-            foreach ($imagesToDelete as $imageRecord) {
-                if ($imageRecord->path) {
-                    Storage::disk('s3')->delete($imageRecord->path);
-                }
-                $imageRecord->delete();
-            }
+            $this->fileStorage->deleteMany($imagesToDelete->pluck('path')->all());
+
+            $product->images()->whereIn('id', $deleteImageIds)->delete();
         }
 
         if (!empty($images)) {
             $maxSortOrder = $product->images()->max('sort_order') ?? -1;
 
             foreach ($images as $index => $imageFile) {
-                $filename = uniqid() . '.' . $imageFile->getClientOriginalExtension();
-                $path = $imageFile->storeAs("products/{$product->id}", $filename, 's3');
+                $path = $this->fileStorage->store($imageFile, "products/{$product->id}");
 
                 $sortOrder = $maxSortOrder + $index + 1;
-
                 $isPrimary = $product->images()->count() === 0 && $index === 0;
 
                 $product->images()->create([
@@ -150,11 +149,7 @@ class ProductService
     {
         $product->loadMissing('images');
 
-        foreach ($product->images as $image) {
-            if ($image->path) {
-                Storage::disk('s3')->delete($image->path);
-            }
-        }
+        $this->fileStorage->deleteMany($product->images->pluck('path')->all());
 
         $product->delete();
     }
