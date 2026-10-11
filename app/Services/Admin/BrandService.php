@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\Brand;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Support\Pagination\PerPage;
 
 class BrandService
 {
@@ -18,8 +19,7 @@ class BrandService
      */
     public function paginate(array $filters): LengthAwarePaginator
     {
-        $perPage = min((int) ($filters['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
-        $perPage = max($perPage, 1);
+        $perPage = PerPage::resolve($filters['per_page'] ?? null);
 
         $sort = in_array($filters['sort'] ?? null, self::SORTABLE, true)
             ? $filters['sort']
