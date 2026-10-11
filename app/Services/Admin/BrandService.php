@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Models\Brand;
+use App\Services\FileStorageService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Support\Pagination\PerPage;
 
@@ -13,6 +14,10 @@ class BrandService
 
     /** Columns a client is allowed to sort by. */
     private const SORTABLE = ['name', 'created_at'];
+
+    public function __construct(
+        private readonly FileStorageService $fileStorage,
+    ) {}
 
     /**
      * @param  array{search?: string, per_page?: int|string, sort?: string, direction?: string}  $filters
@@ -42,7 +47,18 @@ class BrandService
      */
     public function create(array $data): Brand
     {
-        return Brand::create($data);
+        $image = $data['brand_image'] ?? null;
+        unset($data['brand_image']);
+
+        $brand = Brand::create($data);
+
+        if ($image) {
+            $path = $this->fileStorage->store($image, "brands/{$brand->id}");
+
+            $brand->update(['brand_image' => $path]);
+        }
+
+        return $brand;
     }
 
     public function find(Brand $brand): Brand
@@ -55,7 +71,20 @@ class BrandService
      */
     public function update(Brand $brand, array $data): Brand
     {
+        $image = $data['brand_image'] ?? null;
+        unset($data['brand_image']);
+
+        $oldImage = $brand->brand_image;
+
+        if ($image) {
+            $data['brand_image'] = $this->fileStorage->store($image, "brands/{$brand->id}");
+        }
+
         $brand->update($data);
+
+        if ($image && $oldImage) {
+            $this->fileStorage->delete($oldImage);
+        }
 
         return $brand;
     }
@@ -64,6 +93,10 @@ class BrandService
     {
         if ($brand->products()->exists()) {
             abort(409, 'This brand cannot be deleted because it has products assigned to it.');
+        }
+
+        if ($brand->brand_image) {
+            $this->fileStorage->delete($brand->brand_image);
         }
 
         $brand->delete();
