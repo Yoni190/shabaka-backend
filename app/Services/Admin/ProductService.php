@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Pagination\PerPage;
 
 class ProductService
 {
@@ -28,7 +29,7 @@ class ProductService
      */
     public function paginate(array $filters): LengthAwarePaginator
     {
-        $perPage = $this->resolvePerPage($filters['per_page'] ?? null);
+        $perPage = PerPage::resolve($filters['per_page'] ?? null);
 
         $sort = in_array($filters['sort'] ?? null, self::SORTABLE, true)
             ? $filters['sort']
@@ -169,24 +170,5 @@ class ProductService
         return array_key_exists($key, $filters)
             && $filters[$key] !== null
             && $filters[$key] !== '';
-    }
-
-    /**
-     * Coerce the incoming per_page value into a sane integer.
-     *
-     * Missing, non-numeric, zero, and negative values all fall back to the
-     * default. Values above the max are clamped to the max.
-     */
-    private function resolvePerPage(mixed $value): int
-    {
-        // filter_var with FILTER_VALIDATE_INT returns false for 'abc', '', null,
-        // and '2.5' (non-integer strings), but returns the int for '2' and 2.
-        $validated = filter_var($value, FILTER_VALIDATE_INT);
-
-        if ($validated === false || $validated < 1) {
-            return self::DEFAULT_PER_PAGE;
-        }
-
-        return min($validated, self::MAX_PER_PAGE);
     }
 }
