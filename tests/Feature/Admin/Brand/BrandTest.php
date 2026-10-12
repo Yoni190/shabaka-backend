@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use App\Services\FileStorageService;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Mockery;
 
 class BrandTest extends TestCase
 {
@@ -20,6 +24,7 @@ class BrandTest extends TestCase
         parent::setUp();
 
         Sanctum::actingAs(User::factory()->admin()->create());
+        Storage::fake(config('filesystems.uploads_disk', 's3'));
     }
 
     /*
@@ -186,6 +191,96 @@ class BrandTest extends TestCase
             ->assertJsonValidationErrors(['name']);
     }
 
+        public function test_store_creates_a_brand_with_an_image(): void
+    {
+        $response = $this->postJson(self::ENDPOINT, [
+            'name'        => 'Acme',
+            'brand_image' => UploadedFile::fake()->image('logo.jpg'),
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.name', 'Acme')
+            ->assertJsonPath('message', 'Brand created successfully');
+
+        $brand = Brand::where('name', 'Acme')->firstOrFail();
+
+        $this->assertNotNull($brand->brand_image);
+        $this->assertStringStartsWith("brands/{$brand->id}/", $brand->brand_image);
+        Storage::disk($this->disk())->assertExists($brand->brand_image);
+
+        $response->assertJsonPath('data.brand_image', $brand->brand_image);
+        $this->assertNotNull($response->json('data.brand_image_url'));
+        $this->assertStringContainsString(
+            $brand->brand_image,
+            $response->json('data.brand_image_url'),
+        );
+    }
+
+    public function test_store_returns_null_image_fields_when_no_image_is_uploaded(): void
+    {
+        $response = $this->postJson(self::ENDPOINT, [
+            'name' => 'No Image Brand',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.brand_image', null)
+            ->assertJsonPath('data.brand_image_url', null);
+
+        $this->assertDatabaseHas('brands', [
+            'name'        => 'No Image Brand',
+            'brand_image' => null,
+        ]);
+    }
+
+    public function test_store_rejects_non_image_file(): void
+    {
+        $response = $this->postJson(self::ENDPOINT, [
+            'name'        => 'Bad Upload',
+            'brand_image' => UploadedFile::fake()->create('document.pdf', 100),
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['brand_image']);
+
+        $this->assertDatabaseMissing('brands', ['name' => 'Bad Upload']);
+    }
+
+    public function test_store_rejects_oversized_image(): void
+    {
+        // Configured max is 2048 KB; send 3000 KB.
+        $response = $this->postJson(self::ENDPOINT, [
+            'name'        => 'Huge Image',
+            'brand_image' => UploadedFile::fake()->create('huge.jpg', 3000),
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['brand_image']);
+    }
+
+    public function test_store_delegates_image_storage_to_file_storage_service(): void
+    {
+        $this->mock(FileStorageService::class, function ($mock) {
+            $mock->shouldReceive('store')
+                ->once()
+                ->with(
+                    Mockery::type(UploadedFile::class),
+                    Mockery::on(fn ($dir) => is_string($dir) && preg_match('#^brands/\d+$#', $dir) === 1),
+                )
+                ->andReturn('brands/999/mocked.jpg');
+            $mock->shouldReceive('delete')->never();
+        });
+
+        $this->postJson(self::ENDPOINT, [
+            'name'        => 'Mocked Brand',
+            'brand_image' => UploadedFile::fake()->image('logo.jpg'),
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('brands', [
+            'name'        => 'Mocked Brand',
+            'brand_image' => 'brands/999/mocked.jpg',
+        ]);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Show
@@ -280,6 +375,87 @@ class BrandTest extends TestCase
             ->assertJsonValidationErrors(['name']);
     }
 
+        public function test_update_replaces_brand_image_and_deletes_old_file(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'Acme']);
+        $oldPath = "brands/{$brand->id}/old.jpg";
+        Storage::disk($this->disk())->put($oldPath, 'old content');
+        $brand->update(['brand_image' => $oldPath]);
+
+        $response = $this->putJson(self::ENDPOINT . "/{$brand->id}", [
+            'name'        => 'Acme',
+            'brand_image' => UploadedFile::fake()->image('new.jpg'),
+        ]);
+
+        $response->assertOk();
+
+        $brand->refresh();
+
+        $this->assertNotNull($brand->brand_image);
+        $this->assertNotSame($oldPath, $brand->brand_image);
+        $this->assertStringStartsWith("brands/{$brand->id}/", $brand->brand_image);
+        Storage::disk($this->disk())->assertExists($brand->brand_image);
+        Storage::disk($this->disk())->assertMissing($oldPath);
+    }
+
+    public function test_update_without_image_preserves_existing_brand_image(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'Acme']);
+        $existingPath = "brands/{$brand->id}/existing.jpg";
+        Storage::disk($this->disk())->put($existingPath, 'content');
+        $brand->update(['brand_image' => $existingPath]);
+
+        $response = $this->putJson(self::ENDPOINT . "/{$brand->id}", [
+            'name' => 'Acme Renamed',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.name', 'Acme Renamed')
+            ->assertJsonPath('data.brand_image', $existingPath);
+
+        $brand->refresh();
+        $this->assertSame($existingPath, $brand->brand_image);
+        Storage::disk($this->disk())->assertExists($existingPath);
+    }
+
+    public function test_update_adds_image_to_brand_without_one(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'No Image']);
+        $this->assertNull($brand->brand_image);
+
+        $response = $this->putJson(self::ENDPOINT . "/{$brand->id}", [
+            'name'        => 'No Image',
+            'brand_image' => UploadedFile::fake()->image('first.jpg'),
+        ]);
+
+        $response->assertOk();
+
+        $brand->refresh();
+        $this->assertNotNull($brand->brand_image);
+        $this->assertStringStartsWith("brands/{$brand->id}/", $brand->brand_image);
+        Storage::disk($this->disk())->assertExists($brand->brand_image);
+    }
+
+    public function test_update_with_invalid_image_keeps_existing_brand_image(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'Acme']);
+        $existingPath = "brands/{$brand->id}/existing.jpg";
+        Storage::disk($this->disk())->put($existingPath, 'content');
+        $brand->update(['brand_image' => $existingPath]);
+
+        $response = $this->putJson(self::ENDPOINT . "/{$brand->id}", [
+            'name'        => 'Acme',
+            'brand_image' => UploadedFile::fake()->create('bad.pdf', 100),
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['brand_image']);
+
+        $brand->refresh();
+        $this->assertSame($existingPath, $brand->brand_image);
+        Storage::disk($this->disk())->assertExists($existingPath);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Destroy
@@ -317,6 +493,39 @@ class BrandTest extends TestCase
         $response->assertNotFound();
     }
 
+        public function test_destroy_deletes_brand_image(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'Acme']);
+        $path = "brands/{$brand->id}/image.jpg";
+        Storage::disk($this->disk())->put($path, 'content');
+        $brand->update(['brand_image' => $path]);
+
+        $response = $this->deleteJson(self::ENDPOINT . "/{$brand->id}");
+
+        $response->assertOk()
+            ->assertJson(['message' => 'Brand deleted successfully']);
+
+        Storage::disk($this->disk())->assertMissing($path);
+        $this->assertDatabaseMissing('brands', ['id' => $brand->id]);
+    }
+
+    public function test_destroy_preserves_image_when_brand_has_products(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'Acme']);
+        $path = "brands/{$brand->id}/image.jpg";
+        Storage::disk($this->disk())->put($path, 'content');
+        $brand->update(['brand_image' => $path]);
+
+        Product::factory()->create(['brand_id' => $brand->id]);
+
+        $response = $this->deleteJson(self::ENDPOINT . "/{$brand->id}");
+
+        $response->assertStatus(409);
+
+        Storage::disk($this->disk())->assertExists($path);
+        $this->assertDatabaseHas('brands', ['id' => $brand->id]);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Auth
@@ -336,5 +545,10 @@ class BrandTest extends TestCase
 
         $this->postJson(self::ENDPOINT, ['name' => 'Nope'])
             ->assertUnauthorized();
+    }
+
+     private function disk(): string
+    {
+        return config('filesystems.uploads_disk', 's3');
     }
 }
