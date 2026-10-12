@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Catalog\CategoryController as CatalogCategoryController;
 use App\Http\Controllers\Catalog\ProductController as CatalogProductController;
+use App\Http\Controllers\Catalog\BrandController as CatalogBrandController;
 use App\Http\Controllers\Catalog\HomeController;
 
 Route::prefix('v1')->group(function () {
@@ -44,6 +45,7 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::get('categories', [CatalogCategoryController::class, 'index']);
+    Route::get('brands', [CatalogBrandController::class, 'index']);
     Route::get('products', [CatalogProductController::class, 'index']);
     Route::get('products/{product}', [CatalogProductController::class, 'show']);
 });
