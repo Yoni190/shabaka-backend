@@ -15,6 +15,7 @@ use App\Http\Controllers\Catalog\ProductController as CatalogProductController;
 use App\Http\Controllers\Catalog\BrandController as CatalogBrandController;
 use App\Http\Controllers\Catalog\HomeController;
 use App\Http\Controllers\Client\AddressController;
+use App\Http\Controllers\Client\CartController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -26,6 +27,15 @@ Route::prefix('v1')->group(function () {
 
         Route::apiResource('addresses', AddressController::class)
             ->whereNumber('address');
+
+        // Cart
+        Route::prefix('cart')->group(function () {
+            Route::get('', [CartController::class, 'show']);
+            Route::delete('items', [CartController::class, 'clearItems']);
+            Route::post('items', [CartController::class, 'storeItem']);
+            Route::patch('items/{item}', [CartController::class, 'updateItem'])->whereNumber('item');
+            Route::delete('items/{item}', [CartController::class, 'destroyItem'])->whereNumber('item');
+        });
     });
 
     // Admin endpoints
