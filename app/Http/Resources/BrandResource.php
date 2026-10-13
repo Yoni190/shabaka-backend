@@ -18,7 +18,7 @@ class BrandResource extends JsonResource
             'brand_image'    => $this->brand_image,
             'brand_image_url' => $this->brand_image
                 ? config('filesystems.disks.s3.url')
-                    . '/storage/v1/object/public/product-images/'
+                    . '/storage/v1/object/public/images/'
                     . $this->brand_image
                 : null,
             'products_count' => $this->whenCounted('products'),

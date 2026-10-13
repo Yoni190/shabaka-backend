@@ -34,7 +34,7 @@ class ProductResource extends JsonResource
                 return [
                     'id'         => $image->id,
                     'url' => config('filesystems.disks.s3.url')
-                        . '/storage/v1/object/public/product-images/'
+                        . '/storage/v1/object/public/images/'
                         . $image->path,
                     'path' => $image->path,
                     'is_primary' => $image->is_primary,
