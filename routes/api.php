@@ -14,6 +14,7 @@ use App\Http\Controllers\Catalog\CategoryController as CatalogCategoryController
 use App\Http\Controllers\Catalog\ProductController as CatalogProductController;
 use App\Http\Controllers\Catalog\BrandController as CatalogBrandController;
 use App\Http\Controllers\Catalog\HomeController;
+use App\Http\Controllers\Client\AddressController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -22,6 +23,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('user', [UserController::class, 'show']);
         Route::post('logout', [LogoutController::class, 'logout']);
+
+        Route::apiResource('addresses', AddressController::class)
+            ->whereNumber('address');
     });
 
     // Admin endpoints
