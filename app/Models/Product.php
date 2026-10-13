@@ -49,4 +49,9 @@ class Product extends Model
             ->orderBy('sort_order')
             ->orderBy('id');
     }
+
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
 }
