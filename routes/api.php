@@ -16,6 +16,7 @@ use App\Http\Controllers\Catalog\BrandController as CatalogBrandController;
 use App\Http\Controllers\Catalog\HomeController;
 use App\Http\Controllers\Client\AddressController;
 use App\Http\Controllers\Client\CartController;
+use App\Http\Controllers\Client\OrderController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -36,6 +37,8 @@ Route::prefix('v1')->group(function () {
             Route::patch('items/{item}', [CartController::class, 'updateItem'])->whereNumber('item');
             Route::delete('items/{item}', [CartController::class, 'destroyItem'])->whereNumber('item');
         });
+
+        Route::post('orders', [OrderController::class, 'store']);
     });
 
     // Admin endpoints
