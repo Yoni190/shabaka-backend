@@ -32,4 +32,9 @@ class Business extends Model
     {
         return $this->hasOne(Cart::class);
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }
