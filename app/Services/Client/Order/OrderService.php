@@ -125,7 +125,7 @@ class OrderService
                 'shipping_amount'           => '0.00',
                 'discount_amount'           => '0.00',
                 'total_amount'              => $subtotal,
-                'currency'                  => 'USD',
+                'currency'                  => 'SAR',
                 'notes'                     => $data['notes'] ?? null,
             ]);
 
