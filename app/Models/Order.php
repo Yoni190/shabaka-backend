@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'total_amount',
     'currency',
     'notes',
+    'stock_restored_at',
 ])]
 class Order extends Model
 {
@@ -44,6 +45,7 @@ class Order extends Model
             'total_amount'              => 'decimal:2',
             'shipping_address_snapshot' => 'array',
             'billing_address_snapshot'  => 'array',
+            'stock_restored_at' => 'datetime',
         ];
     }
 
