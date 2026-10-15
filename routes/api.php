@@ -17,6 +17,7 @@ use App\Http\Controllers\Catalog\HomeController;
 use App\Http\Controllers\Client\AddressController;
 use App\Http\Controllers\Client\CartController;
 use App\Http\Controllers\Client\OrderController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController; 
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
@@ -53,6 +54,11 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('categories', CategoryController::class);
             Route::apiResource('brands', BrandController::class);
             Route::apiResource('products', ProductController::class);
+
+            // Orders
+            Route::get('orders', [AdminOrderController::class, 'index']);
+            Route::get('orders/{order}', [AdminOrderController::class, 'show'])->whereNumber('order');
+            Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->whereNumber('order');
         });
     });
 
