@@ -17,8 +17,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 COPY . .
-RUN composer dump-autoload --optimize \
-    && chown -R www-data:www-data storage bootstrap/cache
+RUN composer dump-autoload --optimize
 
 # --- Nginx & Supervisor configuration ---
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
@@ -31,6 +30,12 @@ ARG UID=1000
 ARG GID=1000
 RUN groupmod -o -g ${GID} www-data \
     && usermod -o -u ${UID} -g ${GID} www-data
+
+# IMPORTANT: ownership is applied AFTER the UID change,
+# so storage/ and bootstrap/cache/ end up owned by the
+# same UID that PHP-FPM workers run as.
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # Start supervisor (which starts both nginx and php-fpm)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
