@@ -8,6 +8,8 @@ services:
         GID: ${GID:-1000}
     container_name: laravel_app
     env_file: .env
+    ports:
+      - "8000:10000"
     volumes:
       - .:/var/www/html
 
