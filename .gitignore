@@ -25,3 +25,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+tests/Load/*.html
+tests/Load/*.json
+!tests/Load/*.js
