@@ -17,11 +17,15 @@ use App\Http\Controllers\Catalog\HomeController;
 use App\Http\Controllers\Client\AddressController;
 use App\Http\Controllers\Client\CartController;
 use App\Http\Controllers\Client\OrderController;
-use App\Http\Controllers\Admin\OrderController as AdminOrderController; 
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Client\PaymentController;
+use App\Http\Controllers\Webhooks\MoyasarWebhookController;
 
 Route::prefix('v1')->group(function () {
     Route::post('register', [RegisterController::class, 'register']);
     Route::post('login', [LoginController::class, 'login']);
+
+    Route::post('webhooks/moyasar', MoyasarWebhookController::class);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('user', [UserController::class, 'show']);
@@ -40,6 +44,10 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::post('orders', [OrderController::class, 'store']);
+        Route::get('orders/{order}', [OrderController::class, 'show'])->whereNumber('order');
+
+        Route::post('payments/initiate', [PaymentController::class, 'initiate']);
+        Route::post('payments/verify', [PaymentController::class, 'verify']);   
     });
 
     // Admin endpoints
