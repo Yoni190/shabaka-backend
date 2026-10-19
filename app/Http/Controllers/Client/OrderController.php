@@ -33,4 +33,24 @@ class OrderController extends Controller
             ->response()
             ->setStatusCode(201);
     }
+
+    /**
+     * Show an order
+     *
+     * Returns a single order belonging to the authenticated user's business,
+     * including historical item and address snapshots. Orders belonging to
+     * another business return 404.
+     */
+    public function show(Request $request, int $order): OrderResource
+    {
+        $business = $request->user()->business;
+
+        abort_if(! $business, 403, 'Your account is not associated with a business.');
+
+        $found = $business->orders()
+            ->with('items')
+            ->findOrFail($order);
+
+        return new OrderResource($found);
+    }
 }
