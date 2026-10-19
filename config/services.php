@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'moyasar' => [
+        'base_url'      => env('MOYASAR_BASE_URL', 'https://api.moyasar.com/v1'),
+        'secret_key'    => env('MOYASAR_SECRET_KEY'),
+        'webhook_secret' => env('MOYASAR_WEBHOOK_SECRET'),
+        'timeout'       => (int) env('MOYASAR_TIMEOUT', 10),
+    ],
+
 ];
